@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from typing import Any, Iterator
 
 from attr import define, field
@@ -19,21 +18,11 @@ from pyoverkiz.enums import (
     UIWidget,
     UpdateBoxStatus,
 )
+from pyoverkiz.enums.protocol import Protocol
+from pyoverkiz.obfuscate import obfuscate_email, obfuscate_id, obfuscate_string
 from pyoverkiz.types import DATA_TYPE_TO_PYTHON, StateType
 
 # pylint: disable=unused-argument, too-many-instance-attributes, too-many-locals
-
-
-def obfuscate_id(id: str | None) -> str:
-    return re.sub(r"(SETUP)?\d+-", "****-", str(id))
-
-
-def obfuscate_email(email: str | None) -> str:
-    return re.sub(r"(.).*@.*(.\..*)", r"\1****@****\2", str(email))
-
-
-def mask(input: str) -> str:
-    return re.sub(r"[a-zA-Z0-9_.-]*", "*", str(input))
 
 
 @define(init=False, kw_only=True)
@@ -83,14 +72,14 @@ class Setup:
 class Location:
     creation_time: str
     last_update_time: str
-    city: str = field(repr=mask, default=None)
-    country: str = field(repr=mask, default=None)
-    postal_code: str = field(repr=mask, default=None)
-    address_line1: str = field(repr=mask, default=None)
-    address_line2: str = field(repr=mask, default=None)
+    city: str = field(repr=obfuscate_string, default=None)
+    country: str = field(repr=obfuscate_string, default=None)
+    postal_code: str = field(repr=obfuscate_string, default=None)
+    address_line1: str = field(repr=obfuscate_string, default=None)
+    address_line2: str = field(repr=obfuscate_string, default=None)
     timezone: str
-    longitude: str = field(repr=mask, default=None)
-    latitude: str = field(repr=mask, default=None)
+    longitude: str = field(repr=obfuscate_string, default=None)
+    latitude: str = field(repr=obfuscate_string, default=None)
     twilight_mode: int
     twilight_angle: str
     twilight_city: str
@@ -105,14 +94,14 @@ class Location:
         *,
         creation_time: str,
         last_update_time: str,
-        city: str = field(repr=mask, default=None),
-        country: str = field(repr=mask, default=None),
-        postal_code: str = field(repr=mask, default=None),
-        address_line1: str = field(repr=mask, default=None),
-        address_line2: str = field(repr=mask, default=None),
+        city: str = field(repr=obfuscate_string, default=None),
+        country: str = field(repr=obfuscate_string, default=None),
+        postal_code: str = field(repr=obfuscate_string, default=None),
+        address_line1: str = field(repr=obfuscate_string, default=None),
+        address_line2: str = field(repr=obfuscate_string, default=None),
         timezone: str,
-        longitude: str = field(repr=mask, default=None),
-        latitude: str = field(repr=mask, default=None),
+        longitude: str = field(repr=obfuscate_string, default=None),
+        latitude: str = field(repr=obfuscate_string, default=None),
         twilight_mode: int,
         twilight_angle: str,
         twilight_city: str,
@@ -149,7 +138,7 @@ class Device:
     attributes: States
     available: bool
     enabled: bool
-    label: str
+    label: str = field(repr=obfuscate_string)
     device_url: str = field(repr=obfuscate_id)
     controllable_name: str
     definition: Definition
@@ -159,7 +148,9 @@ class Device:
     states: States
     type: ProductType
     place_oid: str | None = None
+    protocol: Protocol = field(init=False, repr=False)
 
+      
     def __init__(
         self,
         *,
@@ -191,6 +182,7 @@ class Device:
         self.data_properties = data_properties
         self.type = ProductType(type)
         self.place_oid = place_oid
+        self.protocol = Protocol(self.device_url.split(":")[0])
 
         if ui_class:
             self.ui_class = UIClass(ui_class)
@@ -474,7 +466,7 @@ class Execution:
 
 @define(init=False, kw_only=True)
 class Scenario:
-    label: str
+    label: str = field(repr=obfuscate_string)
     oid: str = field(repr=obfuscate_id)
 
     def __init__(self, label: str, oid: str, **_: Any):
@@ -512,7 +504,7 @@ class Gateway:
     functions: str | None = None
     sub_type: GatewaySubType | None = None
     id: str = field(repr=obfuscate_id)
-    gateway_id: str
+    gateway_id: str = field(repr=obfuscate_id)
     alive: bool | None = None
     mode: str | None = None
     place_oid: str | None = None
@@ -542,6 +534,7 @@ class Gateway:
         **_: Any,
     ) -> None:
         self.id = gateway_id
+        self.gateway_id = gateway_id
         self.functions = functions
         self.alive = alive
         self.mode = mode
