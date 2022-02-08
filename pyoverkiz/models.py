@@ -150,7 +150,6 @@ class Device:
     place_oid: str | None = None
     protocol: Protocol = field(init=False, repr=False)
 
-      
     def __init__(
         self,
         *,
